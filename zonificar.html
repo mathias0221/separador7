@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Separar Destinos - Enrutador</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #3f51b5;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            max-width: 800px;
+        }
+        .back-button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: 2px solid white;
+            border-radius: 4px;
+            background-color: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .back-button:hover {
+            background-color: white;
+            color: #3f51b5;
+        }
+        h1 {
+            color: white;
+            font-size: 2rem;
+            margin: 0;
+            text-align: center;
+            flex-grow: 1;
+        }
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        .action-button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border: 2px solid white;
+            border-radius: 4px;
+            background-color: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .action-button:hover {
+            background-color: white;
+            color: #3f51b5;
+        }
+        .file-input {
+            display: none;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .data-table th {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        .data-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        .list-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .list-checkbox {
+            margin-right: 0.5rem;
+        }
+        .saved-list-card {
+            background: rgba(30,40,70,0.8);
+            border-radius: 12px;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+            padding: 1rem;
+        }
+        .saved-list-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .saved-list-header:hover {
+            text-decoration: underline;
+        }
+        .saved-list-icon {
+            margin-right: 0.7rem;
+            color: #90caf9;
+            font-size: 1.4rem;
+        }
+        .saved-list-count {
+            color: #b0bec5;
+            font-size: 0.95rem;
+            margin-left: 0.7rem;
+        }
+        .saved-list-table {
+            margin-top: 0.7rem;
+            display: none;
+        }
+        .delete-list-btn {
+            background: transparent;
+            border: none;
+            color: #ef5350;
+            margin-left: auto;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+        /* Estilos para el contenedor de progreso */
+        .progress-container {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .progress-title {
+            color: white;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .progress-status {
+            color: white;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <button class="back-button" onclick="goBack()">Volver</button>
+        <h1>Separar Destinos</h1>
+    </div>
+    <div class="main-container">
+        <div class="action-buttons">
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+            <button class="action-button" onclick="document.getElementById('fileInput').click()">
+                Seleccionar Excel
+            </button>
+            <button class="action-button" onclick="deleteSelectedLists()">
+                Eliminar Lista
+            </button>
+        </div>
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-title">Procesando documento Excel</div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+                <div id="progressText" class="progress-text">0%</div>
+            </div>
+            <div id="progressStatus" class="progress-status">Iniciando procesamiento...</div>
+        </div>
+        <div id="dataContainer"></div>
+        <div id="separatedContainer"></div>
+        <div id="savedListsContainer"></div>
+    </div>
+    <script>
+        let excelData = [];
+        let processedData = [];
+        let separatedData = [];
+        let originalFile = null;
+        let savedLists = [];
+        let isProcessing = false;
+        let currentListName = '';
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        function updateProgress(percent, status) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressStatus = document.getElementById('progressStatus');
+
+            progressContainer.style.display = 'block';
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = `${Math.round(percent)}%`;
+            if (status) {
+                progressStatus.textContent = status;
+            }
+
+            if (percent >= 100) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 1000);
+            }
+        }
+
+        async function processExcelData() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            updateProgress(0, 'Iniciando procesamiento...');
+
+            // Procesar en lotes de 50 registros
+            const batchSize = 50;
+            const totalRegistros = excelData.length;
+            processedData = [];
+
+            for (let i = 0; i < totalRegistros; i += batchSize) {
+                const batch = excelData.slice(i, i + batchSize);
+
+                // Procesar el lote actual
+                const batchResults = await processBatch(batch);
+                processedData.push(...batchResults);
+
+                // Actualizar progreso
+                const progress = (i + batch.length) / totalRegistros * 100;
+                updateProgress(
+                    progress,
+                    `Procesando registros ${i + 1} - ${Math.min(i + batch.length, totalRegistros)} de ${totalRegistros}`
+                );
+
+                // Permitir que la UI se actualice
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+
+            updateProgress(100, 'Procesamiento completado');
+            isProcessing = false;
+        }
+
+        function extractPiezas(row) {
+            // Principalmente tomado de la columna E "pieces" del Excel original
+            if (row.pieces !== undefined && row.pieces !== null && row.pieces !== '') return row.pieces;
+            if (row.Pieces !== undefined && row.Pieces !== null && row.Pieces !== '') return row.Pieces;
+            if (row.PIECES !== undefined && row.PIECES !== null && row.PIECES !== '') return row.PIECES;
+            return '';
+        }
+
+        async function processBatch(batch) {
+            return batch.map(row => {
+                const codigo = row.Receipt ? String(row.Receipt).trim() : '';
+                let nombre = '';
+                let zona = 'sin zona';
+                let direccion = '';
+                const piezas = extractPiezas(row);
+
+                if (row.Consignee) {
+                    const consigneeText = String(row.Consignee).trim();
+                    direccion = consigneeText;
+
+                    // Texto completo en minúsculas
+                    const textoCompleto = consigneeText.toLowerCase();
+
+                    // Partes separadas por coma (para posible uso como fallback)
+                    const partes = textoCompleto.split(',').map(p => p.trim()).filter(Boolean);
+                    const ultimaParte = partes.length >= 2
+                        ? partes[partes.length - 2]
+                        : (partes[partes.length - 1] || textoCompleto);
+
+                    // Buscar coincidencias en todas las rutas/carpetas
+                    const routes = loadRoutes();
+                    if (routes && routes.length > 0) {
+                        let maxCoincidencias = 0;
+                        let zonaGanadora = '';
+
+                        // Preparar el texto para búsqueda
+                        const textoNormalizado = textoCompleto
+                            .replace(/\n/g, ' ')
+                            .replace(/\[.*?\]/g, '')
+                            .replace(/\d+/g, '')
+                            .toLowerCase();
+
+                        // Eliminar palabras comunes que podrían causar falsos positivos
+                        const palabrasIgnorar = [
+                            'caracas', 'general', 'edificio', 'avenida', 'calle', 'local', 'piso', 'centro',
+                            'guia', 'instrucciones', 'numero', 'indicado', 'con', 'el', 'la', 'las', 'los',
+                            'platino', 'en', 'del', 'telefono', 'llamar', 'preguntar', 'por', 'para'
+                        ];
+                        const palabrasTexto = textoNormalizado
+                            .split(/[\s,]+/)
+                            .filter(p => p && !palabrasIgnorar.includes(p) && p.length > 2);
+
+                        routes.forEach(route => {
+                            if (typeof route === 'object' && route.content) {
+                                const contenidoCarpeta = route.content.toLowerCase();
+                                let coincidencias = 0;
+                                let palabrasCoincidentes = new Set();
+
+                                // Buscar coincidencias de frases completas primero
+                                const frases = route.content.toLowerCase().split(',').map(f => f.trim());
+                                frases.forEach(frase => {
+                                    if (frase && frase.length > 3 && textoNormalizado.includes(frase)) {
+                                        coincidencias += 3; // Más peso a frases completas
+                                        palabrasCoincidentes.add(frase);
+                                    }
+                                });
+
+                                // Luego buscar palabras individuales significativas
+                                palabrasTexto.forEach(palabra => {
+                                    if (palabra.length > 3 &&
+                                        contenidoCarpeta.includes(palabra) &&
+                                        !palabrasCoincidentes.has(palabra)) {
+                                        coincidencias++;
+                                        palabrasCoincidentes.add(palabra);
+                                    }
+                                });
+
+                                // Actualizar zona ganadora si tiene más coincidencias
+                                if (coincidencias > maxCoincidencias) {
+                                    maxCoincidencias = coincidencias;
+                                    zonaGanadora = route.name;
+                                }
+                            }
+                        });
+
+                        // Si hay coincidencias suficientes, usamos el nombre de la carpeta como zona
+                        if (maxCoincidencias > 0) {
+                            zona = zonaGanadora;
+                        } else {
+                            // Si no hubo coincidencias en rutas, usamos la parte de dirección como fallback
+                            zona = ultimaParte;
+                        }
+                    } else {
+                        // Si no hay rutas configuradas, usamos la parte de dirección
+                        zona = ultimaParte;
+                    }
+
+                    // Extraer el nombre del consignee (primera línea)
+                    const lines = consigneeText.split(/\r?\n/);
+                    if (lines.length > 0) {
+                        const firstLine = lines[0];
+                        const bracketIndex = firstLine.indexOf('[');
+                        nombre = bracketIndex !== -1 ? firstLine.substring(0, bracketIndex).trim() : firstLine.trim();
+                    }
+                }
+
+                return { codigo, nombre, zona, direccion, piezas };
+            });
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            originalFile = file;
+            // Nombre que verá el usuario en el botón de resultado
+            currentListName = file.name ? file.name.replace(/\.[^/.]+$/, '') : 'Resultado actual';
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    excelData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    // Procesar los datos con la barra de progreso
+                    await processExcelData();
+                    saveCurrentList();
+                    displaySavedLists();
+                    // No mostramos el resultado arriba, solo en la sección de listas guardadas
+                    const container = document.getElementById('dataContainer');
+                    if (container) container.innerHTML = '';
+                } catch (error) {
+                    alert('Error al procesar el archivo Excel: ' + error.message);
+                    updateProgress(100, 'Error en el procesamiento');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function loadRoutes() {
+            const routesJson = localStorage.getItem('routes');
+            return routesJson ? JSON.parse(routesJson) : [];
+        }
+
+        function buildSeparatedData(data) {
+            const routes = loadRoutes();
+            if (!routes || routes.length === 0) {
+                return [];
+            }
+            const routeNames = new Set(routes.map(r => r.name));
+            const separated = [];
+
+            data.forEach(item => {
+                if (item.zona && routeNames.has(item.zona)) {
+                    separated.push({
+                        codigo: item.codigo || '',
+                        nombre: item.nombre || '',
+                        piezas: item.piezas || '',
+                        zona: item.zona
+                    });
+                }
+            });
+
+            return separated;
+        }
+
+        function saveCurrentList() {
+            if (!processedData || processedData.length === 0) return;
+            let lists = JSON.parse(localStorage.getItem('zonifiedLists') || '[]');
+            const fecha = new Date();
+            const baseName = originalFile ? originalFile.name.replace(/\.[^/.]+$/, '') : 'Lista_' + fecha.getTime();
+            const fechaTexto = fecha.toLocaleString();
+
+            // Nombre visible principal: archivo + fecha
+            currentListName = `${baseName} - ${fechaTexto}`;
+
+            // Lista zonificada original
+            lists.push({
+                name: currentListName,
+                data: JSON.parse(JSON.stringify(processedData))
+            });
+
+            // Lista separada por destinos (solo zonas que existen como carpetas)
+            const separados = buildSeparatedData(processedData);
+            if (separados.length > 0) {
+                lists.push({
+                    name: `${baseName} SEPARADOS - ${fechaTexto}`,
+                    data: JSON.parse(JSON.stringify(separados))
+                });
+            }
+
+            localStorage.setItem('zonifiedLists', JSON.stringify(lists));
+        }
+
+        function displayCurrentResult() {
+            const container = document.getElementById('dataContainer');
+            if (!processedData || processedData.length === 0) {
+                container.innerHTML = '<div class="no-data">No hay datos para mostrar</div>';
+                return;
+            }
+
+            separatedData = buildSeparatedData(processedData);
+
+            let html = '<div class="saved-list-card">';
+            html += `<div class="saved-list-header" onclick="toggleCurrentResult()">`;
+            html += `<span class="saved-list-icon">&#128194;</span>`;
+            html += `<span>${currentListName || 'Resultado actual'}</span>`;
+            html += `<span class="saved-list-count">(${processedData.length} registros)</span>`;
+            html += `<button class="delete-list-btn" onclick="event.stopPropagation();deleteCurrentResult()" title="Eliminar este grupo">&#128465;</button>`;
+            html += '</div>';
+
+            html += '<div class="saved-list-table" id="current-result-content" style="display:none;">';
+
+            // Primera "carpeta": lista zonificada original
+            html += '<div class="list-title">Zonificado</div>';
+            html += '<table class="data-table"><thead><tr><th>Código</th><th>Nombre</th><th>Piezas</th><th>Zona</th></tr></thead><tbody>';
+            processedData.forEach(item => {
+                html += `<tr>
+                    <td>${item.codigo || ''}</td>
+                    <td>${item.nombre || ''}</td>
+                    <td>${item.piezas || ''}</td>
+                    <td>${item.zona || 'sin zona'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+
+            // Segunda "carpeta": lista separada por destinos
+            html += '<div class="list-title">Separados</div>';
+
+            if (!separatedData || separatedData.length === 0) {
+                html += '<div class="no-data">No hay destinos separados (ningún registro coincide con una carpeta de la base de datos).</div>';
+            } else {
+                // Agrupar por zona y ordenar alfabéticamente
+                const groupedByZona = {};
+                separatedData.forEach(item => {
+                    const zona = item.zona || 'sin zona';
+                    if (!groupedByZona[zona]) {
+                        groupedByZona[zona] = [];
+                    }
+                    groupedByZona[zona].push(item);
+                });
+
+                Object.keys(groupedByZona).sort().forEach(zona => {
+                    const items = groupedByZona[zona];
+                    html += `<div class="list-title">${zona}</div>`;
+                    html += '<table class="data-table"><thead><tr><th>Código</th><th>Consignee</th><th>Piezas</th></tr></thead><tbody>';
+                    items.forEach(item => {
+                        html += `<tr>
+                            <td>${item.codigo || ''}</td>
+                            <td>${item.nombre || ''}</td>
+                            <td>${item.piezas || ''}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                });
+            }
+
+            html += '</div></div>'; // fin contenido + card
+            container.innerHTML = html;
+        }
+
+        function toggleCurrentResult() {
+            const content = document.getElementById('current-result-content');
+            if (content) {
+                content.style.display = content.style.display === 'none' || content.style.display === '' ? 'block' : 'none';
+            }
+        }
+
+        function deleteCurrentResult() {
+            if (!currentListName) {
+                document.getElementById('dataContainer').innerHTML = '';
+                return;
+            }
+            let lists = JSON.parse(localStorage.getItem('zonifiedLists') || '[]');
+            const baseName = currentListName.split(' - ')[0];
+
+            // Eliminar del storage la lista principal y su versión SEPARADOS asociada a este archivo
+            lists = lists.filter(list => {
+                const fullName = list.name;
+                // clave base del archivo, sin sufijo " SEPARADOS" ni fecha
+                const fileKey = fullName.includes(' SEPARADOS')
+                    ? fullName.split(' SEPARADOS')[0].split(' - ')[0]
+                    : fullName.split(' - ')[0];
+                return fileKey !== baseName;
+            });
+            localStorage.setItem('zonifiedLists', JSON.stringify(lists));
+            // Limpiar la vista del resultado actual y refrescar el listado de guardados
+            document.getElementById('dataContainer').innerHTML = '';
+            processedData = [];
+            separatedData = [];
+            displaySavedLists();
+        }
+
+        function displaySavedLists() {
+            const container = document.getElementById('savedListsContainer');
+            let lists = JSON.parse(localStorage.getItem('zonifiedLists') || '[]');
+            savedLists = lists;
+            if (!lists || lists.length === 0) {
+                container.innerHTML = '<div class="no-data">No hay listas zonificadas guardadas</div>';
+                return;
+            }
+            let html = '<div class="list-title">Listas Zonificadas Guardadas</div>';
+
+            // Agrupar por archivo base (sin " SEPARADOS" ni fecha)
+            const groups = {};
+            lists.forEach((list, idx) => {
+                const fullName = list.name;
+                const baseKey = fullName.includes(' SEPARADOS')
+                    ? fullName.split(' SEPARADOS')[0].split(' - ')[0]
+                    : fullName.split(' - ')[0];
+                if (!groups[baseKey]) {
+                    groups[baseKey] = { zonificado: null, separados: [] };
+                }
+                if (fullName.includes(' SEPARADOS')) {
+                    groups[baseKey].separados.push({ list, idx });
+                } else {
+                    groups[baseKey].zonificado = { list, idx };
+                }
+            });
+
+            Object.keys(groups).forEach(groupKey => {
+                const group = groups[groupKey];
+                const zon = group.zonificado;
+                const sepList = group.separados.length > 0 ? group.separados[0].list : null;
+
+                const anyList = zon ? zon.list : (sepList || { name: groupKey, data: [] });
+                const totalReg = (zon ? zon.list.data.length : 0) + (sepList ? sepList.data.length : 0);
+
+                html += `<div class="saved-list-card">
+                    <div class="saved-list-header" onclick="toggleListTable('${groupKey}')">
+                        <span class="saved-list-icon">&#128194;</span>
+                        <span>${anyList.name}</span>
+                        <span class="saved-list-count">(${totalReg} registros)</span>
+                        <button class="delete-list-btn" onclick="event.stopPropagation();deleteGroup('${groupKey}')" title="Eliminar este grupo">&#128465;</button>
+                    </div>
+                    <div class="saved-list-table" id="group-content-${groupKey}">`;
+
+                // Botón/Sección Zonificado
+                html += `<div class="saved-list-header" style="font-size:1rem; margin-top:0.5rem;" onclick="toggleInnerSection('${groupKey}','zonificado')">
+                        <span class="saved-list-icon">&#128196;</span>
+                        <span>Zonificado</span>
+                    </div>
+                    <div id="group-${groupKey}-zonificado" style="display:none;">`;
+
+                if (zon && zon.list.data && zon.list.data.length > 0) {
+                    html += '<table class="data-table"><thead><tr><th>Código</th><th>Nombre / Dirección</th><th>Piezas</th><th>Zona</th></tr></thead><tbody>';
+                    zon.list.data.forEach(item => {
+                        const displayNombre = item.nombre || item.direccion || '';
+                        html += `<tr>
+                            <td>${item.codigo || ''}</td>
+                            <td>${displayNombre}</td>
+                            <td>${item.piezas || ''}</td>
+                            <td>${item.zona || 'sin zona'}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html += '<div class="no-data">Sin datos zonificados para este archivo.</div>';
+                }
+                html += '</div>'; // cierre zonificado
+
+                // Botón/Sección Separados
+                html += `<div class="saved-list-header" style="font-size:1rem; margin-top:0.5rem;" onclick="toggleInnerSection('${groupKey}','separados')">
+                        <span class="saved-list-icon">&#128196;</span>
+                        <span>Separados</span>
+                    </div>
+                    <div id="group-${groupKey}-separados" style="display:none;">`;
+
+                if (sepList && sepList.data && sepList.data.length > 0) {
+                    const groupedByZona = {};
+                    sepList.data.forEach(item => {
+                        const zona = item.zona || 'sin zona';
+                        if (!groupedByZona[zona]) {
+                            groupedByZona[zona] = [];
+                        }
+                        groupedByZona[zona].push(item);
+                    });
+
+                    Object.keys(groupedByZona).sort().forEach(zona => {
+                        const items = groupedByZona[zona];
+                        const zonaId = zona.replace(/[^a-zA-Z0-9_-]/g, '_');
+                        html += `<div class="saved-list-header" style="font-size:0.95rem; margin-top:0.3rem;" onclick="toggleZona('${groupKey}','${zonaId}')">
+                                <span class="saved-list-icon">&#128193;</span>
+                                <span>${zona}</span>
+                            </div>
+                            <div id="group-${groupKey}-zona-${zonaId}" style="display:none;">
+                                <table class="data-table"><thead><tr><th>Código</th><th>Consignee</th><th>Piezas</th></tr></thead><tbody>`;
+                        items.forEach(item => {
+                            html += `<tr>
+                                    <td>${item.codigo || ''}</td>
+                                    <td>${item.nombre || ''}</td>
+                                    <td>${item.piezas || ''}</td>
+                                </tr>`;
+                        });
+                        html += '</tbody></table></div>';
+                    });
+                } else {
+                    html += '<div class="no-data">No hay destinos separados para este archivo.</div>';
+                }
+
+                html += '</div>'; // cierre separados
+
+                html += '</div></div>'; // cierre contenido+card
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleListTable(key) {
+            const tableDiv = document.getElementById('group-content-' + key);
+            if (tableDiv) {
+                tableDiv.style.display = tableDiv.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+        function toggleInnerSection(groupKey, section) {
+            const div = document.getElementById(`group-${groupKey}-${section}`);
+            if (div) {
+                div.style.display = div.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        function toggleZona(groupKey, zonaId) {
+            const div = document.getElementById(`group-${groupKey}-zona-${zonaId}`);
+            if (div) {
+                div.style.display = div.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+        function deleteSingleList(idx) {
+            let lists = JSON.parse(localStorage.getItem('zonifiedLists') || '[]');
+            lists.splice(idx, 1);
+            localStorage.setItem('zonifiedLists', JSON.stringify(lists));
+            displaySavedLists();
+        }
+
+        function deleteGroup(key) {
+            let lists = JSON.parse(localStorage.getItem('zonifiedLists') || '[]');
+            lists = lists.filter(list => {
+                const fullName = list.name;
+                const baseKey = fullName.includes(' SEPARADOS')
+                    ? fullName.split(' SEPARADOS')[0].split(' - ')[0]
+                    : fullName.split(' - ')[0];
+                return baseKey !== key;
+            });
+            localStorage.setItem('zonifiedLists', JSON.stringify(lists));
+            displaySavedLists();
+        }
+
+        // Mostrar listas guardadas al cargar la página
+        window.onload = function() {
+            displaySavedLists();
+        };
+    </script>
+</body>
+</html>
